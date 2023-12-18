@@ -20,25 +20,42 @@ export type IAttachmentState = IAttachmentItem[];
 
 export type IProgressCallback = (
   attachment: IAttachmentItem,
+  encryptResponse:
+    | { inputFilePath: string; outputFilePath: string }
+    | undefined,
+  prepareResponse:
+    | { inputFilePath: string; outputFilePath: string }
+    | undefined,
   callbacks: {
     onProgress: () => void;
     onSuccess: () => void;
     onFailure: () => void;
   }
-) => Promise<IAttachmentItem>;
+) => Promise<{ inputFilePath: string; outputFilePath: string }>;
 
 type IAddAttachmentsCallback = (
   attachments: Partial<IAttachmentItem>[]
 ) => void;
 
-type IHandleCompleteFlowCallback = (
+type IHandleEncryptCallback = (
   attachment: IAttachmentItem
-) => Promise<IAttachmentItem>;
+) => Promise<{ inputFilePath: string; outputFilePath: string }>;
+
+type IHandlePrepareCallback = (
+  attachment: IAttachmentItem,
+  encryptResponse?: { inputFilePath: string; outputFilePath: string }
+) => Promise<{ inputFilePath: string; outputFilePath: string }>;
+
+type IHandleUploadCallback = (
+  attachment: IAttachmentItem,
+  encryptResponse?: { inputFilePath: string; outputFilePath: string },
+  prepareResponse?: { inputFilePath: string; outputFilePath: string }
+) => Promise<{ inputFilePath: string; outputFilePath: string }>;
 
 type IHandleCompleteFlowOptions = {
-  encrypt?: IHandleCompleteFlowCallback;
-  prepare?: IHandleCompleteFlowCallback;
-  upload?: IHandleCompleteFlowCallback;
+  encrypt?: IHandleEncryptCallback;
+  prepare?: IHandlePrepareCallback;
+  upload?: IHandleUploadCallback;
 };
 
 export async function handleCompleteFlow(
@@ -47,16 +64,18 @@ export async function handleCompleteFlow(
 ): Promise<void> {
   for await (const attachment of attachments) {
     try {
+      let encryptResponse;
       if (options.encrypt) {
         await options.encrypt(attachment);
       }
 
+      let prepareResponse;
       if (options.prepare) {
-        await options.prepare(attachment);
+        await options.prepare(attachment, encryptResponse);
       }
 
       if (options.upload) {
-        await options.upload(attachment);
+        await options.upload(attachment, encryptResponse, prepareResponse);
       }
     } catch (error) {
       throw new Error('Failed to process complete flow');
@@ -115,7 +134,7 @@ export function useCompleteFlow(
   /**
    * ENCRYPT
    */
-  const encrypt: IHandleCompleteFlowCallback = async (attachment) => {
+  const encrypt: IHandleEncryptCallback = async (attachment) => {
     const onProgress = () =>
       setAttachments((attachmentsState) =>
         updateAttachmentByPath(attachmentsState, attachment.path, {
@@ -140,13 +159,20 @@ export function useCompleteFlow(
         })
       );
 
-    return handleEncrypt(attachment, { onProgress, onSuccess, onFailure });
+    return handleEncrypt(attachment, undefined, undefined, {
+      onProgress,
+      onSuccess,
+      onFailure,
+    });
   };
 
   /**
    * PREPARE
    */
-  const prepare: IHandleCompleteFlowCallback = async (attachment) => {
+  const prepare: IHandlePrepareCallback = async (
+    attachment,
+    encryptResponse
+  ) => {
     const onProgress = () =>
       setAttachments((attachmentsState) =>
         updateAttachmentByPath(attachmentsState, attachment.path, {
@@ -171,13 +197,21 @@ export function useCompleteFlow(
         })
       );
 
-    return handlePrepare(attachment, { onProgress, onSuccess, onFailure });
+    return handlePrepare(attachment, encryptResponse, undefined, {
+      onProgress,
+      onSuccess,
+      onFailure,
+    });
   };
 
   /**
    * UPLOAD
    */
-  const upload: IHandleCompleteFlowCallback = async (attachment) => {
+  const upload: IHandleUploadCallback = async (
+    attachment,
+    encryptResponse,
+    prepareResponse
+  ) => {
     const onProgress = () =>
       setAttachments((attachmentsState) =>
         updateAttachmentByPath(attachmentsState, attachment.path, {
@@ -202,12 +236,16 @@ export function useCompleteFlow(
         })
       );
 
-    return handleUpload(attachment, { onProgress, onSuccess, onFailure });
+    return handleUpload(attachment, encryptResponse, prepareResponse, {
+      onProgress,
+      onSuccess,
+      onFailure,
+    });
   };
 
   const completeFlow = React.useCallback(() => {
-    setAttachments((attachments) => {
-      handleCompleteFlow(attachments, {
+    setAttachments((attachmentsState) => {
+      handleCompleteFlow(attachmentsState, {
         encrypt,
         prepare,
         upload,
