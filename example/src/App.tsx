@@ -4,30 +4,21 @@ import { StyleSheet, View, Text } from 'react-native';
 import {
   useCompleteFlow,
   type IProgressCallback,
-  type IAttachmentState,
+  type IAttachmentItem,
 } from 'react-native-attachments';
 
-const DEFAULT_ATTACHMENTS_STATE: IAttachmentState = [
+const DEFAULT_ATTACHMENTS_STATE: Partial<IAttachmentItem>[] = [
   {
     path: '/usr/image1.jpg',
     type: 'FILE',
-    progress: 0,
-    status: 'IDLE',
-    action: 'IDLE',
   },
   {
     path: '/usr/image2.jpg',
     type: 'FILE',
-    progress: 0,
-    status: 'IDLE',
-    action: 'IDLE',
   },
   {
     path: '/usr/image3.jpg',
     type: 'FILE',
-    progress: 0,
-    status: 'IDLE',
-    action: 'IDLE',
   },
 ];
 
@@ -77,14 +68,19 @@ const handleEncrypt: IProgressCallback = async (
 };
 
 export default function App() {
-  const completeFlow = useCompleteFlow(DEFAULT_ATTACHMENTS_STATE, {
+  const completeFlow = useCompleteFlow([], {
     handleUpload,
     handlePrepare,
     handleEncrypt,
   });
 
   React.useEffect(() => {
-    completeFlow.completeFlow();
+    completeFlow.addAttachments(DEFAULT_ATTACHMENTS_STATE);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  React.useEffect(() => {
+    setTimeout(() => completeFlow.completeFlow(), 1000);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
