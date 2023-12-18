@@ -11,11 +11,11 @@ npm install react-native-attachments
 ## Usage
 
 ```js
-import { multiply } from 'react-native-attachments';
+import { handleCompleteFlow } from 'react-native-attachments';
 
 // ...
 
-const result = await multiply(3, 7);
+const result = await handleCompleteFlow();
 ```
 
 ## Contributing

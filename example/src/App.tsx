@@ -1,18 +1,75 @@
 import * as React from 'react';
 
 import { StyleSheet, View, Text } from 'react-native';
-import { multiply } from 'react-native-attachments';
+import {
+  useCompleteFlow,
+  type IProgressCallback,
+} from 'react-native-attachments';
+
+const handleUpload: IProgressCallback = async (
+  attachment,
+  { onProgress, onSuccess, onFailure }
+) => {
+  onProgress();
+
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      onSuccess();
+      resolve(attachment);
+      onFailure;
+    }, 2000);
+  });
+};
+
+const handlePrepare: IProgressCallback = async (
+  attachment,
+  { onProgress, onSuccess, onFailure }
+) => {
+  onProgress();
+
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      onSuccess();
+      resolve(attachment);
+      onFailure;
+    }, 2000);
+  });
+};
+
+const handleEncrypt: IProgressCallback = async (
+  attachment,
+  { onProgress, onSuccess, onFailure }
+) => {
+  onProgress();
+
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      onSuccess();
+      resolve(attachment);
+      onFailure;
+    }, 2000);
+  });
+};
 
 export default function App() {
-  const [result, setResult] = React.useState<number | undefined>();
+  const completeFlow = useCompleteFlow({
+    handleUpload,
+    handlePrepare,
+    handleEncrypt,
+  });
 
   React.useEffect(() => {
-    multiply(3, 7).then(setResult);
+    completeFlow.completeFlow();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
     <View style={styles.container}>
-      <Text>Result: {result}</Text>
+      {completeFlow.attachments.map((attachment, index) => (
+        <Text key={index}>
+          {attachment.path} {attachment.action} {attachment.status}
+        </Text>
+      ))}
     </View>
   );
 }

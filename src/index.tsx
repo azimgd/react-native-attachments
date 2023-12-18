@@ -1,22 +1,212 @@
-import { NativeModules, Platform } from 'react-native';
+import React from 'react';
 
-const LINKING_ERROR =
-  `The package 'react-native-attachments' doesn't seem to be linked. Make sure: \n\n` +
-  Platform.select({ ios: "- You have run 'pod install'\n", default: '' }) +
-  '- You rebuilt the app after installing the package\n' +
-  '- You are not using Expo Go\n';
+export type IAttachmentItem = {
+  path: string;
+  type: 'FILE' | 'IMAGE';
+  progress: number;
+  status: 'IDLE' | 'LOADING' | 'SUCCESS' | 'FAILURE';
+  action: 'IDLE' | 'ENCRYPT' | 'DECRYPT' | 'PREPARE' | 'UPLOAD';
+};
 
-const Attachments = NativeModules.Attachments
-  ? NativeModules.Attachments
-  : new Proxy(
-      {},
-      {
-        get() {
-          throw new Error(LINKING_ERROR);
-        },
+type IAttachmentState = IAttachmentItem[];
+
+export type IProgressCallback = (
+  attachment: IAttachmentItem,
+  callbacks: {
+    onProgress: () => void;
+    onSuccess: () => void;
+    onFailure: () => void;
+  }
+) => Promise<IAttachmentItem>;
+
+type IHandleCompleteFlowCallback = (
+  attachment: IAttachmentItem
+) => Promise<IAttachmentItem>;
+
+type IHandleCompleteFlowOptions = {
+  encrypt?: IHandleCompleteFlowCallback;
+  prepare?: IHandleCompleteFlowCallback;
+  upload?: IHandleCompleteFlowCallback;
+};
+
+export async function handleCompleteFlow(
+  attachments: IAttachmentState,
+  options: IHandleCompleteFlowOptions
+): Promise<void> {
+  for await (const attachment of attachments) {
+    try {
+      if (options.encrypt) {
+        await options.encrypt(attachment);
       }
-    );
 
-export function multiply(a: number, b: number): Promise<number> {
-  return Attachments.multiply(a, b);
+      if (options.prepare) {
+        await options.prepare(attachment);
+      }
+
+      if (options.upload) {
+        await options.upload(attachment);
+      }
+    } catch (error) {
+      throw new Error('Failed to process complete flow');
+    }
+  }
+
+  return Promise.resolve();
+}
+
+const DEFAULT_ATTACHMENTS_STATE: IAttachmentState = [
+  {
+    path: '/usr/image1.jpg',
+    type: 'FILE',
+    progress: 0,
+    status: 'IDLE',
+    action: 'IDLE',
+  },
+  {
+    path: '/usr/image2.jpg',
+    type: 'FILE',
+    progress: 0,
+    status: 'IDLE',
+    action: 'IDLE',
+  },
+  {
+    path: '/usr/image3.jpg',
+    type: 'FILE',
+    progress: 0,
+    status: 'IDLE',
+    action: 'IDLE',
+  },
+];
+
+const updateAttachmentByPath = (
+  attachments: IAttachmentState,
+  attachmentPath: string,
+  attachmentPartial: Partial<IAttachmentItem>
+) =>
+  attachments.map((attachment) => {
+    if (attachment.path === attachmentPath) {
+      return { ...attachment, ...attachmentPartial };
+    }
+    return attachment;
+  });
+
+export function useCompleteFlow({
+  handleUpload,
+  handlePrepare,
+  handleEncrypt,
+}: {
+  handleUpload: IProgressCallback;
+  handlePrepare: IProgressCallback;
+  handleEncrypt: IProgressCallback;
+}) {
+  const [attachments, setAttachments] = React.useState<IAttachmentState>(
+    DEFAULT_ATTACHMENTS_STATE
+  );
+
+  /**
+   * ENCRYPT
+   */
+  const encrypt: IHandleCompleteFlowCallback = async (attachment) => {
+    const onProgress = () =>
+      setAttachments((attachmentsState) =>
+        updateAttachmentByPath(attachmentsState, attachment.path, {
+          action: 'ENCRYPT',
+          status: 'LOADING',
+        })
+      );
+
+    const onSuccess = () =>
+      setAttachments((attachmentsState) =>
+        updateAttachmentByPath(attachmentsState, attachment.path, {
+          action: 'ENCRYPT',
+          status: 'SUCCESS',
+        })
+      );
+
+    const onFailure = () =>
+      setAttachments((attachmentsState) =>
+        updateAttachmentByPath(attachmentsState, attachment.path, {
+          action: 'ENCRYPT',
+          status: 'FAILURE',
+        })
+      );
+
+    return handleEncrypt(attachment, { onProgress, onSuccess, onFailure });
+  };
+
+  /**
+   * PREPARE
+   */
+  const prepare: IHandleCompleteFlowCallback = async (attachment) => {
+    const onProgress = () =>
+      setAttachments((attachmentsState) =>
+        updateAttachmentByPath(attachmentsState, attachment.path, {
+          action: 'PREPARE',
+          status: 'LOADING',
+        })
+      );
+
+    const onSuccess = () =>
+      setAttachments((attachmentsState) =>
+        updateAttachmentByPath(attachmentsState, attachment.path, {
+          action: 'PREPARE',
+          status: 'SUCCESS',
+        })
+      );
+
+    const onFailure = () =>
+      setAttachments((attachmentsState) =>
+        updateAttachmentByPath(attachmentsState, attachment.path, {
+          action: 'PREPARE',
+          status: 'FAILURE',
+        })
+      );
+
+    return handlePrepare(attachment, { onProgress, onSuccess, onFailure });
+  };
+
+  /**
+   * UPLOAD
+   */
+  const upload: IHandleCompleteFlowCallback = async (attachment) => {
+    const onProgress = () =>
+      setAttachments((attachmentsState) =>
+        updateAttachmentByPath(attachmentsState, attachment.path, {
+          action: 'UPLOAD',
+          status: 'LOADING',
+        })
+      );
+
+    const onSuccess = () =>
+      setAttachments((attachmentsState) =>
+        updateAttachmentByPath(attachmentsState, attachment.path, {
+          action: 'UPLOAD',
+          status: 'SUCCESS',
+        })
+      );
+
+    const onFailure = () =>
+      setAttachments((attachmentsState) =>
+        updateAttachmentByPath(attachmentsState, attachment.path, {
+          action: 'UPLOAD',
+          status: 'FAILURE',
+        })
+      );
+
+    return handleUpload(attachment, { onProgress, onSuccess, onFailure });
+  };
+
+  const completeFlow = React.useCallback(() => {
+    handleCompleteFlow(attachments, {
+      encrypt,
+      prepare,
+      upload,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [attachments]);
+
+  return {
+    attachments,
+    completeFlow,
+  };
 }
