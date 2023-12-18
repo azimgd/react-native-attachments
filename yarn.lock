@@ -10936,6 +10936,8 @@ __metadata:
     pod-install: ^0.1.0
     react: 18.2.0
     react-native: 0.73.0
+    react-native-document-picker: ^9.1.0
+    react-native-image-picker: ^7.1.0
   languageName: unknown
   linkType: soft
 
@@ -10961,12 +10963,16 @@ __metadata:
     react: 18.2.0
     react-native: 0.73.0
     react-native-builder-bob: ^0.23.2
+    react-native-document-picker: ^9.1.0
+    react-native-image-picker: ^7.1.0
     release-it: ^15.0.0
     turbo: ^1.10.7
     typescript: ^5.0.2
   peerDependencies:
     react: "*"
     react-native: "*"
+    react-native-document-picker: "*"
+    react-native-image-picker: "*"
   languageName: unknown
   linkType: soft
 
@@ -10996,6 +11002,32 @@ __metadata:
   bin:
     bob: bin/bob
   checksum: 1bee701c21f28f10c5737c8000e7fd6d8f641cf46fe7de03f5086d9951d2c5f3cb45375e292519b85f44a28f907e37f6c7bff324cfb1913b3bee0cb4db2efeb7
+  languageName: node
+  linkType: hard
+
+"react-native-document-picker@npm:^9.1.0":
+  version: 9.1.0
+  resolution: "react-native-document-picker@npm:9.1.0"
+  dependencies:
+    invariant: ^2.2.4
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+    react-native-windows: "*"
+  peerDependenciesMeta:
+    react-native-windows:
+      optional: true
+  checksum: 8db815cc11e4ff20909572897fa0a0d6ec44b90276d2aef915811a2c0d02620620c25376e7f3beb382f55b28ff22aafddc125a5051b850e422d295ea16851c47
+  languageName: node
+  linkType: hard
+
+"react-native-image-picker@npm:^7.1.0":
+  version: 7.1.0
+  resolution: "react-native-image-picker@npm:7.1.0"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+  checksum: 7f5c16dbcde719367e8fea7e05dd0ca8cb4cb4d163ce3fd093440fde69ff536dfb12f8b14a82b3d306785b7a5609e99042a981050631aa91cffb0a410c056ef9
   languageName: node
   linkType: hard
 
