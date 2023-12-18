@@ -8,7 +8,7 @@ export type IAttachmentItem = {
   action: 'IDLE' | 'ENCRYPT' | 'DECRYPT' | 'PREPARE' | 'UPLOAD';
 };
 
-type IAttachmentState = IAttachmentItem[];
+export type IAttachmentState = IAttachmentItem[];
 
 export type IProgressCallback = (
   attachment: IAttachmentItem,
@@ -54,30 +54,6 @@ export async function handleCompleteFlow(
   return Promise.resolve();
 }
 
-const DEFAULT_ATTACHMENTS_STATE: IAttachmentState = [
-  {
-    path: '/usr/image1.jpg',
-    type: 'FILE',
-    progress: 0,
-    status: 'IDLE',
-    action: 'IDLE',
-  },
-  {
-    path: '/usr/image2.jpg',
-    type: 'FILE',
-    progress: 0,
-    status: 'IDLE',
-    action: 'IDLE',
-  },
-  {
-    path: '/usr/image3.jpg',
-    type: 'FILE',
-    progress: 0,
-    status: 'IDLE',
-    action: 'IDLE',
-  },
-];
-
 const updateAttachmentByPath = (
   attachments: IAttachmentState,
   attachmentPath: string,
@@ -90,18 +66,20 @@ const updateAttachmentByPath = (
     return attachment;
   });
 
-export function useCompleteFlow({
-  handleUpload,
-  handlePrepare,
-  handleEncrypt,
-}: {
-  handleUpload: IProgressCallback;
-  handlePrepare: IProgressCallback;
-  handleEncrypt: IProgressCallback;
-}) {
-  const [attachments, setAttachments] = React.useState<IAttachmentState>(
-    DEFAULT_ATTACHMENTS_STATE
-  );
+export function useCompleteFlow(
+  defaultAttachments: IAttachmentState,
+  {
+    handleUpload,
+    handlePrepare,
+    handleEncrypt,
+  }: {
+    handleUpload: IProgressCallback;
+    handlePrepare: IProgressCallback;
+    handleEncrypt: IProgressCallback;
+  }
+) {
+  const [attachments, setAttachments] =
+    React.useState<IAttachmentState>(defaultAttachments);
 
   /**
    * ENCRYPT

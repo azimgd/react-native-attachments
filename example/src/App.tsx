@@ -4,7 +4,32 @@ import { StyleSheet, View, Text } from 'react-native';
 import {
   useCompleteFlow,
   type IProgressCallback,
+  type IAttachmentState,
 } from 'react-native-attachments';
+
+const DEFAULT_ATTACHMENTS_STATE: IAttachmentState = [
+  {
+    path: '/usr/image1.jpg',
+    type: 'FILE',
+    progress: 0,
+    status: 'IDLE',
+    action: 'IDLE',
+  },
+  {
+    path: '/usr/image2.jpg',
+    type: 'FILE',
+    progress: 0,
+    status: 'IDLE',
+    action: 'IDLE',
+  },
+  {
+    path: '/usr/image3.jpg',
+    type: 'FILE',
+    progress: 0,
+    status: 'IDLE',
+    action: 'IDLE',
+  },
+];
 
 const handleUpload: IProgressCallback = async (
   attachment,
@@ -52,7 +77,7 @@ const handleEncrypt: IProgressCallback = async (
 };
 
 export default function App() {
-  const completeFlow = useCompleteFlow({
+  const completeFlow = useCompleteFlow(DEFAULT_ATTACHMENTS_STATE, {
     handleUpload,
     handlePrepare,
     handleEncrypt,
