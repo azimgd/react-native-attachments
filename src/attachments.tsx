@@ -20,6 +20,7 @@ export type IAttachmentState = IAttachmentItem[];
 
 export type IProgressCallback = (
   attachment: IAttachmentItem,
+  meta: Record<string, string>,
   encryptResponse:
     | { inputFilePath: string; outputFilePath: string }
     | undefined,
@@ -109,8 +110,16 @@ export function useCompleteFlow(
     handleEncrypt: IProgressCallback;
   }
 ) {
+  const [meta, setMeta] = React.useState<Record<string, string>>({});
   const [attachments, setAttachments] =
     React.useState<IAttachmentState>(defaultAttachments);
+
+  /**
+   * ADD META
+   */
+  const addMeta = (key: string, value: string) => {
+    setMeta((metaState) => ({ ...metaState, [key]: value }));
+  };
 
   /**
    * ADD ATTACHMENTS
@@ -159,7 +168,7 @@ export function useCompleteFlow(
         })
       );
 
-    return handleEncrypt(attachment, undefined, undefined, {
+    return handleEncrypt(attachment, meta, undefined, undefined, {
       onProgress,
       onSuccess,
       onFailure,
@@ -197,7 +206,7 @@ export function useCompleteFlow(
         })
       );
 
-    return handlePrepare(attachment, encryptResponse, undefined, {
+    return handlePrepare(attachment, meta, encryptResponse, undefined, {
       onProgress,
       onSuccess,
       onFailure,
@@ -236,7 +245,7 @@ export function useCompleteFlow(
         })
       );
 
-    return handleUpload(attachment, encryptResponse, prepareResponse, {
+    return handleUpload(attachment, meta, encryptResponse, prepareResponse, {
       onProgress,
       onSuccess,
       onFailure,
@@ -256,6 +265,7 @@ export function useCompleteFlow(
   }, []);
 
   return {
+    addMeta,
     attachments,
     completeFlow,
     addAttachments,

@@ -14,11 +14,9 @@ export type IEncryptionCallback = <T extends IEvent>(
   payload: IEncryptionPayload[T]
 ) => void;
 
-// Generate random key and initialization vector (IV) for encryption
+// Options Example:
 // const key = Buffer.from('DEFAULT_KEYINPUT');
 // const ivv = crypto.randomBytes(16);
-
-// // Define the buffer size for reading and writing streams
 // const bufferSize = 1024 * 4;
 
 /**

@@ -28,6 +28,7 @@ const DEFAULT_ATTACHMENTS_STATE: Partial<IAttachmentItem>[] = [
 
 const handleUpload: IProgressCallback = async (
   attachment,
+  meta,
   encryptResponse,
   prepareResponse,
   { onProgress, onSuccess, onFailure }
@@ -45,6 +46,7 @@ const handleUpload: IProgressCallback = async (
 
 const handlePrepare: IProgressCallback = async (
   attachment,
+  meta,
   encryptResponse,
   prepareResponse,
   { onProgress, onSuccess, onFailure }
@@ -62,6 +64,7 @@ const handlePrepare: IProgressCallback = async (
 
 const handleEncrypt: IProgressCallback = async (
   attachment,
+  meta,
   encryptResponse,
   prepareResponse,
   { onProgress, onSuccess, onFailure }
@@ -86,6 +89,7 @@ export default function App() {
 
   React.useEffect(() => {
     completeFlow.addAttachments(DEFAULT_ATTACHMENTS_STATE);
+    completeFlow.addMeta('asd', 'dsa');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
