@@ -15,11 +15,11 @@ export type IEncryptionCallback = <T extends IEvent>(
 ) => void;
 
 // Generate random key and initialization vector (IV) for encryption
-const key = Buffer.from('DEFAULT_KEYINPUT');
-const ivv = crypto.randomBytes(16);
+// const key = Buffer.from('DEFAULT_KEYINPUT');
+// const ivv = crypto.randomBytes(16);
 
-// Define the buffer size for reading and writing streams
-const bufferSize = 1024 * 4;
+// // Define the buffer size for reading and writing streams
+// const bufferSize = 1024 * 4;
 
 /**
  * Encrypt file
@@ -27,29 +27,36 @@ const bufferSize = 1024 * 4;
  * @param outputFilePath destination file location path
  */
 export async function encryptFile(
-  inputFilePath: string,
-  outputFilePath: string,
+  path: {
+    inputFilePath: string;
+    outputFilePath: string;
+  },
+  options: {
+    key: Buffer | ArrayBuffer;
+    ivv: Buffer | ArrayBuffer;
+    bufferSize: number;
+  },
   callback: IEncryptionCallback
 ): Promise<void> {
   // Create read and write streams for input and output files
   const readStream = await ReactNativeBlobUtil.fs.readStream(
-    inputFilePath,
+    path.inputFilePath,
     'base64',
-    bufferSize
+    options.bufferSize
   );
   const writeStream = await ReactNativeBlobUtil.fs.writeStream(
-    outputFilePath,
+    path.outputFilePath,
     'base64',
     true
   );
 
   // Create a cipher using AES-128-CBC algorithm with the generated key and IV
-  const cipher = crypto.createCipheriv('aes-128-cbc', key, ivv);
+  const cipher = crypto.createCipheriv('aes-128-cbc', options.key, options.ivv);
 
   await readStream.open();
 
   readStream.onError((error) => {
-    callback('FAILURE', { inputFilePath, outputFilePath, error });
+    callback('FAILURE', { ...path, error });
   });
 
   // When data is available in the read stream, encrypt and write to the output file
@@ -60,7 +67,7 @@ export async function encryptFile(
       'base64'
     );
     writeStream.write(encryptedChunk as string);
-    callback('LOADING', { inputFilePath, outputFilePath });
+    callback('LOADING', path);
   });
 
   // After reading ends, perform final encryption, write to file, and close the streams
@@ -69,7 +76,7 @@ export async function encryptFile(
       const finalEncryptedChunk = cipher.final('hex');
       await writeStream.write(finalEncryptedChunk);
       await writeStream.close();
-      callback('SUCCESS', { inputFilePath, outputFilePath });
+      callback('SUCCESS', path);
       resolve();
     });
   });
@@ -81,28 +88,39 @@ export async function encryptFile(
  * @param outputFilePath destination file location path
  */
 export async function decryptFile(
-  inputFilePath: string,
-  outputFilePath: string,
+  path: {
+    inputFilePath: string;
+    outputFilePath: string;
+  },
+  options: {
+    key: Buffer | ArrayBuffer;
+    ivv: Buffer | ArrayBuffer;
+    bufferSize: number;
+  },
   callback: IEncryptionCallback
 ): Promise<void> {
   const readStream = await ReactNativeBlobUtil.fs.readStream(
-    inputFilePath,
+    path.inputFilePath,
     'base64',
-    bufferSize
+    options.bufferSize
   );
   const writeStream = await ReactNativeBlobUtil.fs.writeStream(
-    outputFilePath,
+    path.outputFilePath,
     'base64',
     true
   );
 
   // Create a decipher using AES-128-CBC algorithm with the same key and IV used for encryption
-  const decipher = crypto.createDecipheriv('aes-128-cbc', key, ivv);
+  const decipher = crypto.createDecipheriv(
+    'aes-128-cbc',
+    options.key,
+    options.ivv
+  );
 
   await readStream.open();
 
   readStream.onError((error) => {
-    callback('FAILURE', { inputFilePath, outputFilePath, error });
+    callback('FAILURE', { ...path, error });
   });
 
   readStream.onData((chunk) => {
@@ -112,7 +130,7 @@ export async function decryptFile(
       'base64'
     );
     writeStream.write(decryptedChunk as string);
-    callback('LOADING', { inputFilePath, outputFilePath });
+    callback('LOADING', path);
   });
 
   await new Promise<void>((resolve) => {
@@ -120,7 +138,7 @@ export async function decryptFile(
       const finalDecryptedChunk = decipher.final('base64');
       await writeStream.write(finalDecryptedChunk);
       await writeStream.close();
-      callback('SUCCESS', { inputFilePath, outputFilePath });
+      callback('SUCCESS', path);
       resolve();
     });
   });
