@@ -70,10 +70,13 @@
     "prettier": "^2.0.5",
     "react": "18.2.0",
     "react-native": "0.73.0",
+    "react-native-blob-util": "^0.19.6",
     "react-native-builder-bob": "^0.23.2",
     "react-native-document-picker": "^9.1.0",
     "react-native-image-picker": "^7.1.0",
+    "react-native-quick-crypto": "^0.6.1",
     "release-it": "^15.0.0",
+    "stream": "^0.0.2",
     "turbo": "^1.10.7",
     "typescript": "^5.0.2"
   },
@@ -83,8 +86,11 @@
   "peerDependencies": {
     "react": "*",
     "react-native": "*",
+    "react-native-blob-util": "*",
     "react-native-document-picker": "*",
-    "react-native-image-picker": "*"
+    "react-native-image-picker": "*",
+    "react-native-quick-crypto": "*",
+    "stream": "*"
   },
   "workspaces": [
     "example"

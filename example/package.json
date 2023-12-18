@@ -12,8 +12,11 @@
   "dependencies": {
     "react": "18.2.0",
     "react-native": "0.73.0",
+    "react-native-blob-util": "^0.19.6",
     "react-native-document-picker": "^9.1.0",
-    "react-native-image-picker": "^7.1.0"
+    "react-native-image-picker": "^7.1.0",
+    "react-native-quick-crypto": "^0.6.1",
+    "stream": "^0.0.2"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
