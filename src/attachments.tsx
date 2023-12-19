@@ -17,10 +17,11 @@ export type IAttachmentItem = {
 };
 
 export type IAttachmentState = IAttachmentItem[];
+export type IMetaState = Record<string, string>;
 
 export type IProgressCallback = (
   attachment: IAttachmentItem,
-  meta: Record<string, string>,
+  meta: IMetaState,
   encryptResponse:
     | { inputFilePath: string; outputFilePath: string }
     | undefined,
@@ -39,16 +40,19 @@ type IAddAttachmentsCallback = (
 ) => void;
 
 type IHandleEncryptCallback = (
-  attachment: IAttachmentItem
+  attachment: IAttachmentItem,
+  meta: IMetaState
 ) => Promise<{ inputFilePath: string; outputFilePath: string }>;
 
 type IHandlePrepareCallback = (
   attachment: IAttachmentItem,
+  meta: IMetaState,
   encryptResponse?: { inputFilePath: string; outputFilePath: string }
 ) => Promise<{ inputFilePath: string; outputFilePath: string }>;
 
 type IHandleUploadCallback = (
   attachment: IAttachmentItem,
+  meta: IMetaState,
   encryptResponse?: { inputFilePath: string; outputFilePath: string },
   prepareResponse?: { inputFilePath: string; outputFilePath: string }
 ) => Promise<{ inputFilePath: string; outputFilePath: string }>;
@@ -61,25 +65,36 @@ type IHandleCompleteFlowOptions = {
 
 export async function handleCompleteFlow(
   attachments: IAttachmentState,
+  meta: IMetaState,
   options: IHandleCompleteFlowOptions
 ): Promise<void> {
   for await (const attachment of attachments) {
     try {
       let encryptResponse;
       if (options.encrypt) {
-        await options.encrypt(attachment);
+        encryptResponse = await options.encrypt(attachment, meta);
       }
 
       let prepareResponse;
       if (options.prepare) {
-        await options.prepare(attachment, encryptResponse);
+        prepareResponse = await options.prepare(
+          attachment,
+          meta,
+          encryptResponse
+        );
       }
 
       if (options.upload) {
-        await options.upload(attachment, encryptResponse, prepareResponse);
+        await options.upload(
+          attachment,
+          meta,
+          encryptResponse,
+          prepareResponse
+        );
       }
     } catch (error) {
-      throw new Error('Failed to process complete flow');
+      // @ts-ignore
+      console.warn('Failed to process complete flow: ' + error?.message);
     }
   }
 
@@ -110,7 +125,7 @@ export function useCompleteFlow(
     handleEncrypt: IProgressCallback;
   }
 ) {
-  const [meta, setMeta] = React.useState<Record<string, string>>({});
+  const [_, setMeta] = React.useState<IMetaState>({});
   const [attachments, setAttachments] =
     React.useState<IAttachmentState>(defaultAttachments);
 
@@ -143,7 +158,7 @@ export function useCompleteFlow(
   /**
    * ENCRYPT
    */
-  const encrypt: IHandleEncryptCallback = async (attachment) => {
+  const encrypt: IHandleEncryptCallback = async (attachment, meta) => {
     const onProgress = () =>
       setAttachments((attachmentsState) =>
         updateAttachmentByPath(attachmentsState, attachment.path, {
@@ -180,6 +195,7 @@ export function useCompleteFlow(
    */
   const prepare: IHandlePrepareCallback = async (
     attachment,
+    meta,
     encryptResponse
   ) => {
     const onProgress = () =>
@@ -218,6 +234,7 @@ export function useCompleteFlow(
    */
   const upload: IHandleUploadCallback = async (
     attachment,
+    meta,
     encryptResponse,
     prepareResponse
   ) => {
@@ -252,17 +269,19 @@ export function useCompleteFlow(
     });
   };
 
-  const completeFlow = React.useCallback(() => {
-    setAttachments((attachmentsState) => {
-      handleCompleteFlow(attachmentsState, {
-        encrypt,
-        prepare,
-        upload,
+  const completeFlow = () => {
+    setMeta((metaState) => {
+      setAttachments((attachmentsState) => {
+        handleCompleteFlow(attachmentsState, metaState, {
+          encrypt,
+          prepare,
+          upload,
+        });
+        return attachmentsState;
       });
-      return attachments;
+      return metaState;
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  };
 
   return {
     addMeta,
