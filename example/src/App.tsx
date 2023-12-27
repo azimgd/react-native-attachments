@@ -33,6 +33,11 @@ const handleUpload: IProgressCallback = async (
   prepareResponse,
   { onProgress, onSuccess, onFailure }
 ) => {
+  attachment;
+  meta;
+  encryptResponse;
+  prepareResponse;
+
   onProgress();
 
   return new Promise((resolve) => {
@@ -51,6 +56,11 @@ const handlePrepare: IProgressCallback = async (
   prepareResponse,
   { onProgress, onSuccess, onFailure }
 ) => {
+  attachment;
+  meta;
+  encryptResponse;
+  prepareResponse;
+
   onProgress();
 
   return new Promise((resolve) => {
@@ -69,6 +79,11 @@ const handleEncrypt: IProgressCallback = async (
   prepareResponse,
   { onProgress, onSuccess, onFailure }
 ) => {
+  attachment;
+  meta;
+  encryptResponse;
+  prepareResponse;
+
   onProgress();
 
   return new Promise((resolve) => {
