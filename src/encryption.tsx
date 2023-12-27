@@ -1,5 +1,5 @@
-const fs = require('fs');
-const crypto = require('crypto');
+import fs from 'fs';
+import crypto from 'crypto';
 
 type IEvent = 'LOADING' | 'SUCCESS' | 'FAILURE';
 export type IEncryptionPayload = {
@@ -18,8 +18,8 @@ export async function encryptFile(
     outputFilePath: string;
   },
   options: {
-    key: Buffer | ArrayBuffer;
-    ivv: Buffer | ArrayBuffer;
+    key: crypto.CipherKey;
+    ivv: crypto.BinaryLike;
     bufferSize: number;
   },
   callback: IEncryptionCallback
@@ -33,7 +33,11 @@ export async function encryptFile(
     flags: 'a', // 'a' for appending data
   });
 
-  const cipher = crypto.createCipheriv('aes-128-cbc', options.key, options.ivv);
+  const cipher = crypto.createCipheriv(
+    'aes-128-cbc' as crypto.CipherGCMTypes,
+    options.key,
+    options.ivv
+  );
 
   readStream.on('error', (error: any) => {
     callback('FAILURE', { ...path, error: error.message });
@@ -59,8 +63,8 @@ export async function decryptFile(
     outputFilePath: string;
   },
   options: {
-    key: Buffer | ArrayBuffer;
-    ivv: Buffer | ArrayBuffer;
+    key: crypto.CipherKey;
+    ivv: crypto.BinaryLike;
     bufferSize: number;
   },
   callback: IEncryptionCallback
@@ -75,7 +79,7 @@ export async function decryptFile(
   });
 
   const decipher = crypto.createDecipheriv(
-    'aes-128-cbc',
+    'aes-128-cbc' as crypto.CipherGCMTypes,
     options.key,
     options.ivv
   );
