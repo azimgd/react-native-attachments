@@ -1,9 +1,8 @@
-import DocumentPicker, {
+import {
   type DocumentPickerOptions,
   type DocumentPickerResponse,
 } from 'react-native-document-picker';
 import {
-  launchImageLibrary,
   type ImageLibraryOptions,
   type Asset,
 } from 'react-native-image-picker';
@@ -22,28 +21,8 @@ export const pickImage = async (
     onFailure?: IPickImageFailureCallback;
   }
 ) => {
-  try {
-    const response = await launchImageLibrary(options);
-
-    if (response.didCancel) {
-      throw new Error('image cannot be picked');
-    }
-
-    if (response.errorMessage || !response.assets) {
-      throw new Error('image cannot be picked');
-    }
-
-    return callbacks.onSuccess(
-      response.assets.map((item) => ({
-        ...item,
-        uri: item.uri ? item.uri.replace('file://', '') : undefined,
-      }))
-    );
-  } catch (error) {
-    if (callbacks.onFailure) {
-      return callbacks.onFailure();
-    }
-  }
+  options;
+  callbacks;
 };
 
 export const pickFile = async (
@@ -53,14 +32,6 @@ export const pickFile = async (
     onFailure?: () => void;
   }
 ) => {
-  try {
-    const response = await DocumentPicker.pickSingle(options);
-    response.uri = response.uri.replace('file://', '');
-
-    return callbacks.onSuccess([response]);
-  } catch (error) {
-    if (callbacks.onFailure) {
-      return callbacks.onFailure();
-    }
-  }
+  options;
+  callbacks;
 };

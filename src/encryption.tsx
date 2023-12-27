@@ -1,7 +1,5 @@
-import ReactNativeBlobUtil from 'react-native-blob-util';
-import crypto from 'react-native-quick-crypto';
-import { Buffer } from 'buffer';
-import type { BinaryLike } from 'react-native-quick-crypto/lib/typescript/Utils';
+import fs from 'fs';
+import crypto from 'crypto';
 
 type IEvent = 'LOADING' | 'SUCCESS' | 'FAILURE';
 export type IEncryptionPayload = {
@@ -14,130 +12,92 @@ export type IEncryptionCallback = <T extends IEvent>(
   payload: IEncryptionPayload[T]
 ) => void;
 
-// Options Example:
-// const key = Buffer.from('DEFAULT_KEYINPUT');
-// const ivv = crypto.randomBytes(16);
-// const bufferSize = 1024 * 4;
-
-/**
- * Encrypt file
- * @param inputFilePath source file location path
- * @param outputFilePath destination file location path
- */
 export async function encryptFile(
   path: {
     inputFilePath: string;
     outputFilePath: string;
   },
   options: {
-    key: Buffer | ArrayBuffer;
-    ivv: Buffer | ArrayBuffer;
+    key: crypto.CipherKey;
+    ivv: crypto.BinaryLike;
     bufferSize: number;
   },
   callback: IEncryptionCallback
 ): Promise<void> {
-  // Create read and write streams for input and output files
-  const readStream = await ReactNativeBlobUtil.fs.readStream(
-    path.inputFilePath,
-    'base64',
-    options.bufferSize
-  );
-  const writeStream = await ReactNativeBlobUtil.fs.writeStream(
-    path.outputFilePath,
-    'base64',
-    true
-  );
-
-  // Create a cipher using AES-128-CBC algorithm with the generated key and IV
-  const cipher = crypto.createCipheriv('aes-128-cbc', options.key, options.ivv);
-
-  await readStream.open();
-
-  readStream.onError((error) => {
-    callback('FAILURE', { ...path, error });
+  const readStream = fs.createReadStream(path.inputFilePath, {
+    encoding: 'base64',
+    highWaterMark: options.bufferSize,
+  });
+  const writeStream = fs.createWriteStream(path.outputFilePath, {
+    encoding: 'base64',
+    flags: 'a', // 'a' for appending data
   });
 
-  // When data is available in the read stream, encrypt and write to the output file
-  readStream.onData((chunk) => {
-    const encryptedChunk = cipher.update(
-      chunk as BinaryLike,
-      'base64',
-      'base64'
-    );
-    writeStream.write(encryptedChunk as string);
+  const cipher = crypto.createCipheriv(
+    'aes-128-cbc' as crypto.CipherGCMTypes,
+    options.key,
+    options.ivv
+  );
+
+  readStream.on('error', (error: any) => {
+    callback('FAILURE', { ...path, error: error.message });
+  });
+
+  readStream.on('data', (chunk: any) => {
+    const encryptedChunk = cipher.update(chunk, 'utf8', 'base64');
+    writeStream.write(encryptedChunk);
     callback('LOADING', path);
   });
 
-  // After reading ends, perform final encryption, write to file, and close the streams
-  await new Promise<void>((resolve) => {
-    readStream.onEnd(async () => {
-      const finalEncryptedChunk = cipher.final('hex');
-      await writeStream.write(finalEncryptedChunk);
-      await writeStream.close();
-      callback('SUCCESS', path);
-      resolve();
-    });
+  readStream.on('end', async () => {
+    const finalEncryptedChunk = cipher.final('base64');
+    writeStream.write(finalEncryptedChunk);
+    writeStream.end();
+    callback('SUCCESS', path);
   });
 }
 
-/**
- * Decrypt file
- * @param inputFilePath source file location path
- * @param outputFilePath destination file location path
- */
 export async function decryptFile(
   path: {
     inputFilePath: string;
     outputFilePath: string;
   },
   options: {
-    key: Buffer | ArrayBuffer;
-    ivv: Buffer | ArrayBuffer;
+    key: crypto.CipherKey;
+    ivv: crypto.BinaryLike;
     bufferSize: number;
   },
   callback: IEncryptionCallback
 ): Promise<void> {
-  const readStream = await ReactNativeBlobUtil.fs.readStream(
-    path.inputFilePath,
-    'base64',
-    options.bufferSize
-  );
-  const writeStream = await ReactNativeBlobUtil.fs.writeStream(
-    path.outputFilePath,
-    'base64',
-    true
-  );
+  const readStream = fs.createReadStream(path.inputFilePath, {
+    encoding: 'base64',
+    highWaterMark: options.bufferSize,
+  });
+  const writeStream = fs.createWriteStream(path.outputFilePath, {
+    encoding: 'base64',
+    flags: 'a', // 'a' for appending data
+  });
 
-  // Create a decipher using AES-128-CBC algorithm with the same key and IV used for encryption
   const decipher = crypto.createDecipheriv(
-    'aes-128-cbc',
+    'aes-128-cbc' as crypto.CipherGCMTypes,
     options.key,
     options.ivv
   );
 
-  await readStream.open();
-
-  readStream.onError((error) => {
-    callback('FAILURE', { ...path, error });
+  readStream.on('error', (error: any) => {
+    callback('FAILURE', { ...path, error: error.message });
   });
 
-  readStream.onData((chunk) => {
-    const decryptedChunk = decipher.update(
-      chunk as BinaryLike,
-      'base64',
-      'base64'
-    );
-    writeStream.write(decryptedChunk as string);
+  readStream.on('data', (chunk: any) => {
+    const decryptedChunk = decipher.update(chunk, 'base64', 'utf8');
+    writeStream.write(decryptedChunk);
     callback('LOADING', path);
   });
 
-  await new Promise<void>((resolve) => {
-    readStream.onEnd(async () => {
-      const finalDecryptedChunk = decipher.final('base64');
-      await writeStream.write(finalDecryptedChunk);
-      await writeStream.close();
-      callback('SUCCESS', path);
-      resolve();
-    });
+  readStream.on('end', async () => {
+    const finalDecryptedChunk = decipher.final('utf8');
+    writeStream.write(finalDecryptedChunk);
+    writeStream.end();
+    callback('SUCCESS', path);
   });
 }
