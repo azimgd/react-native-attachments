@@ -96,11 +96,18 @@ const handleEncrypt: IProgressCallback = async (
 };
 
 export default function App() {
-  const completeFlow = useCompleteFlow([], {
-    handleUpload,
-    handlePrepare,
-    handleEncrypt,
-  });
+  const completeFlow = useCompleteFlow(
+    [],
+    {
+      handleUpload,
+      handlePrepare,
+      handleEncrypt,
+    },
+    {
+      onSuccess: console.log,
+      onFailure: console.log,
+    }
+  );
 
   React.useEffect(() => {
     completeFlow.addAttachments(DEFAULT_ATTACHMENTS_STATE);

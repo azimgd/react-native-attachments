@@ -66,8 +66,15 @@ type IHandleCompleteFlowOptions = {
 export async function handleCompleteFlow(
   attachments: IAttachmentState,
   meta: IMetaState,
-  options: IHandleCompleteFlowOptions
+  options: IHandleCompleteFlowOptions,
+  callbacks: {
+    onSuccess: () => void;
+    onProgress: () => void;
+    onFailure: () => void;
+  }
 ): Promise<void> {
+  callbacks.onProgress();
+
   for await (const attachment of attachments) {
     try {
       let encryptResponse;
@@ -93,9 +100,12 @@ export async function handleCompleteFlow(
         );
       }
     } catch (error) {
+      callbacks.onFailure();
       // @ts-ignore
       console.warn('Failed to process complete flow: ' + error?.message);
     }
+
+    await callbacks.onSuccess();
   }
 
   return Promise.resolve();
@@ -123,6 +133,11 @@ export function useCompleteFlow(
     handleUpload: IProgressCallback;
     handlePrepare: IProgressCallback;
     handleEncrypt: IProgressCallback;
+  },
+  callbacks: {
+    onSuccess: () => void;
+    onProgress: () => void;
+    onFailure: () => void;
   }
 ) {
   const [_, setMeta] = React.useState<IMetaState>({});
@@ -272,11 +287,16 @@ export function useCompleteFlow(
   const completeFlow = () => {
     setMeta((metaState) => {
       setAttachments((attachmentsState) => {
-        handleCompleteFlow(attachmentsState, metaState, {
-          encrypt,
-          prepare,
-          upload,
-        });
+        handleCompleteFlow(
+          attachmentsState,
+          metaState,
+          {
+            encrypt,
+            prepare,
+            upload,
+          },
+          callbacks
+        );
         return attachmentsState;
       });
       return metaState;
