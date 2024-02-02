@@ -29,60 +29,10 @@ const DEFAULT_ATTACHMENTS_STATE: Partial<IAttachmentItem>[] = [
 const handleUpload: IProgressCallback = async (
   attachment,
   meta,
-  encryptResponse,
-  prepareResponse,
   { onProgress, onSuccess, onFailure }
 ) => {
   attachment;
   meta;
-  encryptResponse;
-  prepareResponse;
-
-  onProgress();
-
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      onSuccess();
-      resolve({ inputFilePath: '', outputFilePath: '' });
-      onFailure;
-    }, 2000);
-  });
-};
-
-const handlePrepare: IProgressCallback = async (
-  attachment,
-  meta,
-  encryptResponse,
-  prepareResponse,
-  { onProgress, onSuccess, onFailure }
-) => {
-  attachment;
-  meta;
-  encryptResponse;
-  prepareResponse;
-
-  onProgress();
-
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      onSuccess();
-      resolve({ inputFilePath: '', outputFilePath: '' });
-      onFailure;
-    }, 2000);
-  });
-};
-
-const handleEncrypt: IProgressCallback = async (
-  attachment,
-  meta,
-  encryptResponse,
-  prepareResponse,
-  { onProgress, onSuccess, onFailure }
-) => {
-  attachment;
-  meta;
-  encryptResponse;
-  prepareResponse;
 
   onProgress();
 
@@ -98,14 +48,11 @@ const handleEncrypt: IProgressCallback = async (
 export default function App() {
   const completeFlow = useCompleteFlow(
     [],
-    {
-      handleUpload,
-      handlePrepare,
-      handleEncrypt,
-    },
+    { handleUpload },
     {
       onSuccess: console.log,
       onFailure: console.log,
+      onProgress: console.log,
     }
   );
 
